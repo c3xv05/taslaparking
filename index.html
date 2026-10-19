@@ -1,0 +1,1785 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#141619">
+<title>Tesla Hover Parking Simulator</title>
+
+<style>
+:root{
+  color-scheme:dark;
+  font-family:Inter,"Noto Sans TC",system-ui,sans-serif;
+  color:#fff;
+  background:#161b20;
+  --red:#ef3545;
+  --muted:#a4adb7;
+}
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden}
+canvas{display:block;touch-action:none}
+button{
+  font:inherit;
+  cursor:pointer;
+  color:inherit;
+  border:1px solid #ffffff28;
+  background:#ffffff0c;
+  border-radius:7px;
+  padding:12px 18px;
+  transition:.2s;
+}
+button:hover{background:#ffffff20}
+button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.primary{
+  background:var(--red);
+  border-color:var(--red);
+  font-weight:650;
+}
+.primary:hover{background:#ff4858}
+.eyebrow{
+  font-size:10px;
+  letter-spacing:.28em;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+.top{
+  position:fixed;
+  inset:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:24px 30px;
+  background:linear-gradient(#111820db,transparent);
+  pointer-events:none;
+}
+.brand{letter-spacing:.23em;font-size:13px;font-weight:700}
+.brand small{
+  display:block;
+  font-weight:400;
+  font-size:9px;
+  letter-spacing:.15em;
+  color:#adb8c2;
+  margin-top:6px;
+}
+.top .tools{display:flex;gap:8px;pointer-events:auto}
+.tools button{
+  padding:9px 12px;
+  background:#111820aa;
+  font-size:12px;
+}
+.panel{
+  position:fixed;
+  left:5vw;
+  top:50%;
+  transform:translateY(-50%);
+  width:min(440px,90vw);
+  padding:32px;
+  background:linear-gradient(130deg,#151a20f5,#161b23e5);
+  border:1px solid #ffffff1a;
+  border-radius:12px;
+  box-shadow:0 30px 80px #0004;
+  backdrop-filter:blur(15px);
+}
+h1{
+  font-size:clamp(32px,4vw,51px);
+  line-height:1.04;
+  font-weight:450;
+  letter-spacing:-.045em;
+  margin:18px 0;
+}
+h1 span{color:#f04450}
+h2{font-size:30px;font-weight:500;margin:14px 0}
+p{font-size:13px;line-height:1.85;color:#b4bec8}
+.rule{height:1px;background:#ffffff18;margin:24px 0}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions button{flex:1}
+.records{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:22px;
+  font-size:13px;
+}
+.records b{font-size:22px;font-weight:450}
+.fine{font-size:10px;color:#9ba5af;margin:20px 0 0;line-height:1.8}
+.hud{
+  position:fixed;
+  top:105px;
+  left:30px;
+  width:176px;
+  pointer-events:none;
+}
+.clock{
+  font-size:45px;
+  font-weight:300;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.04em;
+}
+.clock span{font-size:13px;color:#aeb7c1;letter-spacing:0}
+.card{
+  padding:17px 18px;
+  border:1px solid #ffffff18;
+  background:#111820b8;
+  backdrop-filter:blur(10px);
+  border-radius:8px;
+  margin-bottom:10px;
+}
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
+  line-height:2;
+  font-size:11px;
+  color:#aeb7c1;
+}
+.row b{color:#fff;font-weight:500;font-variant-numeric:tabular-nums}
+.bar{height:3px;background:#ffffff20;margin-top:12px}
+.bar i{
+  height:100%;
+  display:block;
+  background:var(--red);
+  width:100%;
+  transition:width .1s;
+}
+.target{
+  position:fixed;
+  top:110px;
+  right:30px;
+  text-align:right;
+  pointer-events:none;
+}
+.target strong{display:block;font-size:28px;font-weight:400;margin:7px 0}
+.tag{color:#ff6b77;font-size:11px;letter-spacing:.12em}
+.bottom{
+  position:fixed;
+  bottom:24px;
+  left:0;
+  right:0;
+  text-align:center;
+  font-size:11px;
+  color:#b2bdc8;
+  pointer-events:none;
+}
+.key{
+  display:inline-block;
+  border:1px solid #ffffff35;
+  border-radius:3px;
+  padding:3px 5px;
+  margin:0 4px;
+  background:#14202b88;
+  color:#fff;
+  font-size:10px;
+}
+.toast{
+  position:fixed;
+  top:27%;
+  left:50%;
+  transform:translateX(-50%);
+  background:#171e26e8;
+  border:1px solid #ffffff22;
+  padding:12px 24px;
+  border-radius:7px;
+  font-size:13px;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .2s;
+}
+.stars{font-size:40px;letter-spacing:9px;color:#ffcf72;margin:12px 0}
+.score{font-size:62px;font-weight:250}
+.score small{font-size:16px;color:#aeb7c1}
+.help{
+  position:fixed;
+  inset:0;
+  background:#080c12c9;
+  display:grid;
+  place-items:center;
+  z-index:10;
+  backdrop-filter:blur(10px);
+}
+.help article{
+  width:min(550px,92vw);
+  max-height:85vh;
+  overflow:auto;
+  padding:28px;
+  background:#1b222b;
+  border:1px solid #ffffff25;
+  border-radius:12px;
+}
+.help p{margin:10px 0}
+.mobile{
+  display:none;
+  position:fixed;
+  inset:auto 0 25px;
+  pointer-events:none;
+}
+.stick{
+  width:112px;
+  height:112px;
+  border:1px solid #ffffff50;
+  background:#141e2b66;
+  border-radius:50%;
+  position:absolute;
+  bottom:0;
+  left:22px;
+  pointer-events:auto;
+  touch-action:none;
+}
+.knob{
+  position:absolute;
+  left:35px;
+  top:35px;
+  width:40px;
+  height:40px;
+  background:#ffffff55;
+  border:1px solid #fff8;
+  border-radius:50%;
+  pointer-events:none;
+}
+.flight-buttons{
+  position:absolute;
+  right:20px;
+  bottom:0;
+  display:grid;
+  grid-template-columns:58px 75px;
+  gap:8px;
+  pointer-events:auto;
+}
+.flight-buttons button{
+  touch-action:none;
+  background:#111a24c9;
+  padding:13px 5px;
+  font-size:12px;
+}
+.flight-buttons .lift{grid-row:span 2;background:#e93243cc}
+.hidden{display:none!important}
+.success-glow{animation:celebrate 1s ease-in-out 3}
+@keyframes celebrate{50%{box-shadow:0 0 80px #ed34466b}}
+@media(pointer:coarse){
+  .mobile{display:block}
+  .bottom{bottom:151px;font-size:10px}
+}
+@media(max-width:650px){
+  .top{padding:16px}
+  .brand{font-size:10px;letter-spacing:.12em}
+  .brand small{font-size:8px}
+  .tools button{font-size:10px;padding:8px}
+  .hud{top:80px;left:14px;width:142px}
+  .card{padding:10px 12px}
+  .clock{font-size:32px}
+  .target{right:16px;top:82px}
+  .target strong{font-size:23px}
+  .panel{left:5vw;padding:25px;max-height:75vh;overflow:auto}
+  .bottom{padding:0 10px}
+  .toast{top:38%;font-size:11px;max-width:85vw;text-align:center}
+  .row{font-size:10px}
+}
+@media(max-height:520px){
+  .panel{padding:20px;max-height:77vh;overflow:auto}
+  h1{font-size:32px;margin:10px 0}
+  .rule{margin:14px 0}
+  .hud{top:76px}
+  .target{top:83px}
+  .card{padding:8px 12px;margin-bottom:6px}
+  .clock{font-size:30px}
+  .fine{margin-top:12px}
+  .mobile{bottom:16px}
+  .stick{left:185px;width:90px;height:90px}
+  .knob{left:24px;top:24px}
+  .bottom{bottom:15px;left:270px;right:170px}
+  .hud .row{line-height:1.6}
+}
+</style>
+
+<script type="importmap">
+{
+  "imports":{
+    "three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+  }
+}
+</script>
+</head>
+
+<body>
+<div class="top">
+  <div class="brand">
+    TESLA / HOVER
+    <small>PARKING SIMULATOR · CONCEPT 01</small>
+  </div>
+  <div class="tools">
+    <button id="sound" aria-label="切換音效">音效 關</button>
+    <button id="cam">視角 C</button>
+    <button id="pause" class="hidden">暫停 Ⅱ</button>
+  </div>
+</div>
+
+<div id="hud" class="hud hidden">
+  <div class="card">
+    <div class="eyebrow">TIME REMAINING</div>
+    <div class="clock" id="timer">90.0 <span>SEC</span></div>
+  </div>
+  <div class="card">
+    <div class="row"><span>懸浮能量</span><b id="energy">100%</b></div>
+    <div class="bar"><i id="energyBar"></i></div>
+  </div>
+  <div class="card">
+    <div class="row"><span>速度</span><b id="speed">0 km/h</b></div>
+    <div class="row"><span>高度</span><b id="height">0.0 m</b></div>
+    <div class="row"><span>碰撞</span><b id="hits">0</b></div>
+    <div class="row"><span>模式</span><b id="mode">地面</b></div>
+    <div class="row"><span>攝影機</span><b id="cameraName">車尾跟隨</b></div>
+  </div>
+</div>
+
+<div id="targetHud" class="target hidden">
+  <div class="eyebrow">DESTINATION</div>
+  <strong id="bayLabel">BAY 01</strong>
+  <span class="tag" id="distance">00 m · TARGET</span>
+  <p id="parkStatus">完全入格 · 落地 · 停穩</p>
+</div>
+
+<section id="menu" class="panel">
+  <div class="eyebrow">THE NEXT DIMENSION OF DRIVING</div>
+  <h1>Own the road.<br><span>Then rise above.</span></h1>
+  <p>Tesla Hover Parking Simulator<br>未來懸浮停車模擬器</p>
+  <div class="rule"></div>
+  <p>
+    90 秒，一個目的地。駕駛紅色電動跑車，穿梭未來城市；
+    必要時升空，精準落入發光車格。
+  </p>
+  <div class="records">
+    <span>最佳紀錄<br><b id="best">—</b></span>
+    <span>成功停車<br><b id="wins">0</b></span>
+  </div>
+  <div class="actions">
+    <button id="start" class="primary" disabled>正在載入 3D…</button>
+    <button id="helpBtn">操作教學 ↗</button>
+  </div>
+  <p class="fine">
+    <a href="./index.html" download="index.html" style="color:#c3cbd2">
+      下載完整單檔 index.html ↗
+    </a><br>
+    非官方虛構概念遊戲，與 Tesla 無關；懸浮並非真實車輛功能。<br>
+    建議使用現代瀏覽器，手機橫向遊玩。
+  </p>
+</section>
+
+<section id="pausePanel" class="panel hidden">
+  <div class="eyebrow">TAKE A BREATH</div>
+  <h2>遊戲已暫停</h2>
+  <p>時間、能量和車輛均已暫停。</p>
+  <div class="actions">
+    <button id="resume" class="primary">繼續駕駛</button>
+    <button data-menu>返回主選單</button>
+  </div>
+</section>
+
+<section id="result" class="panel hidden">
+  <div class="eyebrow" id="resultEyebrow">MISSION COMPLETE</div>
+  <h2 id="resultTitle">停車成功</h2>
+  <div id="stars" class="stars"></div>
+  <div id="score" class="score"></div>
+  <p id="resultDetails"></p>
+  <div class="actions">
+    <button id="retry" class="primary">再玩一次</button>
+    <button data-menu>返回主選單</button>
+  </div>
+</section>
+
+<div id="help" class="help hidden">
+  <article>
+    <div class="eyebrow">DRIVER BRIEFING</div>
+    <h2>先駕駛，再起飛。</h2>
+    <p>
+      <b>地面：</b>W / ↑ 前進，S / ↓ 煞車及倒車，
+      A / ← 與 D / → 轉向。放開油門會滑行減速。
+    </p>
+    <p>
+      <b>懸浮：</b>Space 起飛／降落。
+      W/S 前後平移、A/D 左右平移，R 上升、F 下降。
+      高度上限 5 m；能量耗盡自動降落。
+      降落遇障礙物時，請平移至空地。
+    </p>
+    <p>
+      <b>視角：</b>C 循環切換車尾、俯視、自由模式。
+      自由模式可拖曳畫面旋轉視角，滾輪縮放。
+      P / Esc 暫停。
+    </p>
+    <p>
+      <b>手機：</b>左下搖桿駕駛，右下起降、升降按鈕；
+      上方可切換視角、暫停及音效。
+    </p>
+    <p>
+      <b>目標：</b>90 秒內把整輛車停入發光車格，
+      落地、停穩 0.5 秒。碰撞扣 5 秒，1.5 秒內不重複扣時。
+    </p>
+    <p>
+      <b>評分：</b>剩餘時間 60 分、碰撞 25 分、
+      累計飛行耗能效率 15 分。
+      80 分三星，55 分二星，其餘一星。
+    </p>
+    <button id="closeHelp" class="primary">了解，準備駕駛</button>
+  </article>
+</div>
+
+<div class="bottom" id="hint">
+  <span class="key">W A S D</span> 駕駛
+  <span class="key">SPACE</span> 起飛 / 降落
+  <span class="key">R / F</span> 高度
+  <span class="key">C</span> 視角
+</div>
+
+<div id="mobile" class="mobile hidden">
+  <div id="stick" class="stick" aria-label="虛擬駕駛搖桿">
+    <div id="knob" class="knob"></div>
+  </div>
+  <div class="flight-buttons">
+    <button id="up">上升 R</button>
+    <button id="lift" class="lift">起飛<br>Space</button>
+    <button id="down">下降 F</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script
+  type="module"
+  onerror="document.getElementById('start').textContent='Three.js 載入失敗，請確認網路後重新整理'"
+>
+import * as THREE from 'three';
+
+// 01 · 集中常數、狀態與安全儲存
+const CFG = Object.freeze({
+  duration:90,
+  maxSpeed:12,
+  reverseSpeed:5,
+  acceleration:8,
+  friction:3.8,
+  steer:1.65,
+  hoverSpeed:7,
+  hoverAccel:5,
+  maxHeight:5,
+  verticalSpeed:1.8,
+  drain:12,
+  recharge:18,
+  penalty:5,
+  protection:1.5,
+  parkTime:.5,
+  carWidth:2.4,
+  carLength:4.6,
+  carHeight:1.32,
+  slotWidth:4.4,
+  slotLength:7
+});
+
+const $ = id => document.getElementById(id);
+const clamp = THREE.MathUtils.clamp;
+const damp = (a,b,k,dt) => THREE.MathUtils.damp(a,b,k,dt);
+
+let saved = {best:0,stars:0,wins:0,sound:false};
+
+try {
+  const s = JSON.parse(localStorage.getItem('hover-parking-v1'));
+  if (s) {
+    for (const k of ['best','stars','wins']) {
+      if (Number.isFinite(s[k])) saved[k] = Math.max(0,s[k]);
+    }
+    saved.sound = s.sound === true;
+  }
+} catch {}
+
+function persist() {
+  try {
+    localStorage.setItem('hover-parking-v1',JSON.stringify(saved));
+  } catch {}
+}
+
+let state = 'MENU';
+let time = CFG.duration;
+let energy = 100;
+let usedEnergy = 0;
+let hits = 0;
+let protection = 0;
+let stable = 0;
+let shake = 0;
+let toastTime = 0;
+let cameraMode = 0;
+let orbitYaw = .6;
+let orbitPitch = .55;
+let orbitRadius = 15;
+let ready = false;
+
+const car = {
+  x:0,z:16,y:0,yaw:0,
+  speed:0,vx:0,vz:0,vy:0,
+  flight:'GROUND'
+};
+
+const keys = new Set();
+const touch = {x:0,y:0,up:0,down:0};
+const touchPointers = {up:new Set(),down:new Set()};
+
+function records() {
+  $('best').textContent = saved.best
+    ? `${saved.best} / 100 · ${'★'.repeat(saved.stars)}`
+    : '—';
+  $('wins').textContent = saved.wins;
+}
+records();
+
+function toast(message) {
+  $('toast').textContent = message;
+  toastTime = 2.6;
+  $('toast').style.opacity = 1;
+}
+
+// 02 · Web Audio：互動解鎖、音效與柔和音樂
+let audio = null;
+let musicClock = 0;
+let musicNote = 0;
+
+function unlock() {
+  if (!saved.sound) return;
+  try {
+    audio ??= new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume().catch(()=>{});
+  } catch {}
+}
+
+function tone(
+  f=400,
+  len=.12,
+  type='sine',
+  vol=.045,
+  end=f
+) {
+  if (!saved.sound || !audio || audio.state !== 'running') return;
+
+  try {
+    const o = audio.createOscillator();
+    const g = audio.createGain();
+    const t = audio.currentTime;
+
+    o.type = type;
+    o.frequency.setValueAtTime(f,t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20,end),t+len);
+
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol,t+.015);
+    g.gain.exponentialRampToValueAtTime(.0001,t+len);
+
+    o.connect(g).connect(audio.destination);
+    o.start(t);
+    o.stop(t+len+.02);
+  } catch {}
+}
+
+function sound(type) {
+  unlock();
+
+  if (type === 'up') {
+    tone(160,.55,'sine',.07,700);
+  } else if (type === 'down') {
+    tone(650,.5,'sine',.05,120);
+  } else if (type === 'hit') {
+    tone(100,.25,'sawtooth',.07,40);
+  } else if (type === 'win') {
+    tone(523,.7);
+    tone(659,.8);
+    tone(784,1);
+  } else if (type === 'fail') {
+    tone(220,.7,'triangle',.08,65);
+  } else {
+    tone(600,.08);
+  }
+}
+
+function syncSound() {
+  $('sound').textContent = `音效 ${saved.sound?'開':'關'}`;
+}
+syncSound();
+
+$('sound').onclick = () => {
+  saved.sound = !saved.sound;
+  persist();
+  syncSound();
+  sound('click');
+  if (!saved.sound && audio) audio.suspend().catch(()=>{});
+};
+
+// 03 · Three.js 場景與幾何模型
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#9eacb8');
+scene.fog = new THREE.Fog('#a6b2bc',90,300);
+
+const renderer = new THREE.WebGLRenderer({
+  antialias:true,
+  powerPreference:'high-performance'
+});
+
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+document.body.prepend(renderer.domElement);
+
+const camera = new THREE.PerspectiveCamera(
+  48,innerWidth/innerHeight,.1,400
+);
+
+camera.position.set(24,18,32);
+
+const camLook = new THREE.Vector3(0,0,0);
+const desired = new THREE.Vector3();
+const look = new THREE.Vector3();
+
+scene.add(new THREE.HemisphereLight(0xe4f2ff,0x6e6d66,2.5));
+
+const sun = new THREE.DirectionalLight(0xffead6,3.2);
+sun.position.set(-25,45,25);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+
+Object.assign(sun.shadow.camera,{
+  left:-40,right:40,top:40,bottom:-40,near:1,far:120
+});
+sun.shadow.bias = -.0006;
+scene.add(sun);
+
+const mat = (color,metalness=0,roughness=.7) =>
+  new THREE.MeshStandardMaterial({color,metalness,roughness});
+
+const asphalt = mat('#343d44');
+const white = mat('#dce3e5');
+const concrete = mat('#828c92');
+const dark = mat('#11151a',.2,.35);
+const red = mat('#c82032',.75,.22);
+const glass = mat('#172b39',.75,.13);
+const metal = mat('#616d77',.8,.3);
+
+const glow = new THREE.MeshStandardMaterial({
+  color:'#ff394e',
+  emissive:'#ff233d',
+  emissiveIntensity:2
+});
+
+const lightMat = new THREE.MeshStandardMaterial({
+  color:'#f3ffff',
+  emissive:'#bdedff',
+  emissiveIntensity:3
+});
+
+const boxGeo = new THREE.BoxGeometry(1,1,1);
+
+function box(parent,x,y,z,w,h,d,m,shadow=true) {
+  const a = new THREE.Mesh(boxGeo,m);
+  a.position.set(x,y,z);
+  a.scale.set(w,h,d);
+  a.castShadow = shadow;
+  a.receiveShadow = true;
+  parent.add(a);
+  return a;
+}
+
+box(scene,0,-.2,0,90,.4,70,asphalt,false);
+box(scene,0,-.28,0,400,.2,400,mat('#75838b'),false);
+
+// 天空漸層球，不使用額外圖像資源
+const sky = new THREE.Mesh(
+  new THREE.SphereGeometry(220,24,16),
+  new THREE.ShaderMaterial({
+    side:THREE.BackSide,
+    depthWrite:false,
+    vertexShader:`
+      varying vec3 v;
+      void main(){
+        v=position;
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);
+      }
+    `,
+    fragmentShader:`
+      varying vec3 v;
+      void main(){
+        float h=clamp(normalize(v).y,0.,1.);
+        gl_FragColor=vec4(
+          mix(
+            vec3(.72,.77,.79),
+            vec3(.26,.41,.57),
+            pow(h,.55)
+          ),
+          1.
+        );
+      }
+    `
+  })
+);
+scene.add(sky);
+
+const solids = [];
+const dynamic = new THREE.Group();
+scene.add(dynamic);
+
+function solid(x,z,w,d,h,y=0) {
+  solids.push({x,z,w,d,h,y});
+}
+
+// 外圍護欄
+for (const z of [-23,23]) {
+  box(scene,0,.5,z,62,1,.4,concrete);
+  solid(0,z,62,.4,1);
+  box(scene,0,1.04,z,62,.08,.3,metal);
+}
+for (const x of [-31,31]) {
+  box(scene,x,.5,0,.4,1,46,concrete);
+  solid(x,0,.4,46,1);
+  box(scene,x,1.04,0,.3,.08,46,metal);
+}
+
+let wallCount = solids.length;
+
+// 固定停車格及止輪墩
+const slots = [];
+
+for (const z of [-13,3]) {
+  for (let i=0;i<11;i++) {
+    const x = (i-5)*4.8;
+    slots.push({x,z,id:slots.length+1});
+
+    for (const side of [-1,1]) {
+      box(scene,x+side*2.2,.018,z,.055,.035,7,white,false);
+    }
+
+    box(scene,x,.018,z-3.5,4.4,.035,.055,white,false);
+    box(scene,x,.08,z-3,1.5,.16,.25,concrete,false);
+    solid(x,z-3,1.5,.25,.16);
+  }
+}
+
+wallCount = solids.length;
+
+for (let x=-26;x<28;x+=6) {
+  box(scene,x,.015,-4.5,2.2,.025,.1,white,false);
+  box(scene,x,.015,16,2.2,.025,.1,white,false);
+}
+
+// 樓群、窗帶與燈柱
+for (let i=0;i<52;i++) {
+  const angle = i/52*Math.PI*2;
+  const r = 62+(i%4)*12;
+  const x = Math.cos(angle)*r;
+  const z = Math.sin(angle)*r;
+  const h = 12+(i*17%43);
+  const w = 6+(i%5)*2;
+
+  const bmat = mat(
+    ['#647681','#566772','#8a969d','#455965'][i%4],
+    .35,.55
+  );
+
+  box(scene,x,h/2,z,w,h,7,bmat);
+
+  for (let yy=4;yy<h;yy+=3) {
+    box(
+      scene,x,yy,z+3.52,w*.85,.12,.04,
+      mat('#c4d8de',.2),false
+    );
+  }
+
+  box(scene,x,h+.25,z,w+.3,.5,7.3,metal);
+}
+
+for (const x of [-28,28]) {
+  for (const z of [-19,-3,19]) {
+    box(scene,x,4,z,.16,8,.16,metal);
+    box(scene,x-1,8,z,2.2,.14,.4,dark);
+    box(scene,x-1,7.9,z,1.4,.06,.3,lightMat,false);
+  }
+}
+
+// 原生幾何跑車：曲線車身、玻璃、保險桿、輪胎與燈具
+function carModel(bodyMat=red) {
+  const g = new THREE.Group();
+  const shape = new THREE.Shape();
+
+  shape.moveTo(-.88,-2.12);
+  shape.quadraticCurveTo(-1.05,-1.9,-1,-1);
+  shape.lineTo(-1,1.35);
+  shape.quadraticCurveTo(-.95,2.08,-.72,2.15);
+  shape.lineTo(.72,2.15);
+  shape.quadraticCurveTo(1,2.05,1,1.35);
+  shape.lineTo(1,-1);
+  shape.quadraticCurveTo(1.05,-1.95,.88,-2.12);
+  shape.closePath();
+
+  const geom = new THREE.ExtrudeGeometry(shape,{
+    depth:.42,
+    bevelEnabled:true,
+    bevelThickness:.12,
+    bevelSize:.08,
+    bevelSegments:2,
+    steps:1
+  });
+
+  geom.rotateX(Math.PI/2);
+
+  const body = new THREE.Mesh(geom,bodyMat);
+  body.position.y = .85;
+  body.castShadow = true;
+  g.add(body);
+
+  box(g,0,.48,0,1.94,.28,3.8,bodyMat);
+  box(g,0,.48,-2.02,1.76,.18,.2,dark);
+  box(g,0,.51,2.02,1.84,.16,.24,dark);
+
+  const cab = box(g,0,1.02,.13,1.5,.48,1.65,glass);
+  cab.rotation.x = .03;
+
+  const windshield = box(g,0,1.03,-.78,1.48,.53,.07,glass);
+  windshield.rotation.x = .6;
+
+  const rearWindow = box(g,0,1.04,1.01,1.45,.45,.07,glass);
+  rearWindow.rotation.x = -.6;
+
+  box(g,0,1.27,.35,1.38,.065,.94,bodyMat);
+
+  for (const side of [-1,1]) {
+    const wind = box(g,side*.72,1.04,.1,.045,.48,1.7,glass);
+    wind.rotation.z = -side*.16;
+
+    box(g,side*.65,.79,-2.09,.49,.065,.055,lightMat);
+    box(g,side*.63,.79,2.11,.56,.065,.055,glow);
+    box(g,side*1.08,.98,-.38,.24,.12,.35,bodyMat);
+    box(g,side*.98,.64,.4,.04,.025,.35,metal);
+  }
+
+  const wheels = [];
+
+  for (const x of [-.98,.98]) {
+    for (const z of [-1.31,1.28]) {
+      const w = new THREE.Group();
+
+      const tire = new THREE.Mesh(
+        new THREE.CylinderGeometry(.36,.36,.25,16),dark
+      );
+      tire.rotation.z = Math.PI/2;
+      w.add(tire);
+
+      const rim = new THREE.Mesh(
+        new THREE.CylinderGeometry(.24,.24,.265,12),metal
+      );
+      rim.rotation.z = Math.PI/2;
+      w.add(rim);
+
+      w.position.set(x,.36,z);
+      g.add(w);
+      wheels.push(w);
+    }
+  }
+
+  const under = box(
+    g,0,.2,0,1.65,.035,3.5,
+    new THREE.MeshBasicMaterial({
+      color:'#ff344d',
+      transparent:true,
+      opacity:0
+    }),
+    false
+  );
+
+  g.userData = {wheels,under};
+  return g;
+}
+
+const vehicle = carModel();
+scene.add(vehicle);
+
+// 發光目標
+const targetGroup = new THREE.Group();
+scene.add(targetGroup);
+
+for (const side of [-1,1]) {
+  box(targetGroup,side*2.2,.045,0,.09,.07,7,glow,false);
+  box(targetGroup,0,.045,side*3.5,4.4,.07,.09,glow,false);
+}
+
+const pad = box(
+  targetGroup,0,.022,0,4.35,.012,6.95,
+  new THREE.MeshBasicMaterial({
+    color:'#ff2948',
+    transparent:true,
+    opacity:.12
+  }),
+  false
+);
+
+const beacon = new THREE.Mesh(
+  new THREE.ConeGeometry(.38,.65,4),glow
+);
+beacon.rotation.z = Math.PI;
+targetGroup.add(beacon);
+
+let target = slots[0];
+
+// 04 · 合法隨機佈局：保留道路及車格進出空間
+function shuffle(a) {
+  for (let i=a.length-1;i>0;i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function clearDynamic() {
+  while (dynamic.children.length) {
+    const g = dynamic.children[0];
+    dynamic.remove(g);
+
+    g.traverse(o=>{
+      if (o.geometry && o.geometry !== boxGeo) {
+        o.geometry.dispose();
+      }
+
+      if (
+        o.material &&
+        !Array.isArray(o.material) &&
+        ![
+          red,dark,metal,glass,glow,
+          lightMat,white,concrete
+        ].includes(o.material)
+      ) {
+        o.material.dispose();
+      }
+    });
+  }
+
+  solids.length = wallCount;
+}
+
+function generate() {
+  clearDynamic();
+
+  target = slots[Math.floor(Math.random()*slots.length)];
+  targetGroup.position.set(target.x,0,target.z);
+
+  const available = shuffle(slots.filter(s=>s!==target));
+  const count = 10+Math.floor(Math.random()*6);
+
+  for (let i=0;i<count;i++) {
+    const s = available[i];
+
+    if (i%3 !== 0) {
+      const parked = carModel(
+        mat(['#e2e5e8','#42596a','#20262d'][i%3],.6,.3)
+      );
+
+      parked.position.set(s.x,0,s.z);
+      dynamic.add(parked);
+      solid(s.x,s.z,2.4,4.6,1.4);
+    } else {
+      const h = i%2 ? 1.15 : .7;
+      box(dynamic,s.x,h/2,s.z,2.6,h,.65,concrete);
+
+      for (let a=-1;a<=1;a++) {
+        box(
+          dynamic,s.x+a*.8,h/2,s.z+.335,
+          .3,h*.8,.03,glow,false
+        );
+      }
+
+      solid(s.x,s.z,2.6,.7,h);
+    }
+  }
+
+  for (const x of [-26,26]) {
+    for (const z of [-5,15]) {
+      box(dynamic,x,.06,z,.7,.12,.7,dark);
+
+      const cone = new THREE.Mesh(
+        new THREE.ConeGeometry(.26,.85,12),
+        mat('#eb7135')
+      );
+
+      cone.position.set(x,.55,z);
+      dynamic.add(cone);
+      solid(x,z,.7,.7,1);
+    }
+  }
+
+  $('bayLabel').textContent =
+    `BAY ${String(target.id).padStart(2,'0')}`;
+}
+
+// 05 · 車身定向矩形 SAT + 垂直區間碰撞
+function overlap(x,z,y,yaw,o) {
+  if (
+    y >= o.y+o.h+.025 ||
+    y+CFG.carHeight <= o.y+.01
+  ) {
+    return false;
+  }
+
+  const c = Math.cos(yaw);
+  const s = Math.sin(yaw);
+  const dx = o.x-x;
+  const dz = o.z-z;
+  const a = CFG.carWidth/2;
+  const b = CFG.carLength/2;
+  const hx = o.w/2;
+  const hz = o.d/2;
+
+  return (
+    Math.abs(dx) <
+      hx+Math.abs(c)*a+Math.abs(s)*b &&
+    Math.abs(dz) <
+      hz+Math.abs(s)*a+Math.abs(c)*b &&
+    Math.abs(dx*c-dz*s) <
+      a+hx*Math.abs(c)+hz*Math.abs(s) &&
+    Math.abs(dx*s+dz*c) <
+      b+hx*Math.abs(s)+hz*Math.abs(c)
+  );
+}
+
+function collides(x,z,y,yaw) {
+  for (const o of solids) {
+    if (overlap(x,z,y,yaw,o)) return true;
+  }
+  return false;
+}
+
+function collision() {
+  if (protection > 0) return;
+
+  protection = CFG.protection;
+  time = Math.max(0,time-CFG.penalty);
+  hits++;
+  shake = .35;
+
+  toast('碰撞！−5 秒');
+  sound('hit');
+}
+
+function withinTarget() {
+  const c = Math.cos(car.yaw);
+  const s = Math.sin(car.yaw);
+
+  const hx =
+    Math.abs(c)*CFG.carWidth/2 +
+    Math.abs(s)*CFG.carLength/2;
+
+  const hz =
+    Math.abs(s)*CFG.carWidth/2 +
+    Math.abs(c)*CFG.carLength/2;
+
+  return (
+    Math.abs(car.x-target.x)+hx <= CFG.slotWidth/2 &&
+    Math.abs(car.z-target.z)+hz <= CFG.slotLength/2
+  );
+}
+
+// 06 · 駕駛與懸浮物理，使用小時間步避免穿透
+function flightToggle() {
+  if (state !== 'PLAYING') return;
+
+  if (car.flight === 'GROUND') {
+    if (energy < 15) {
+      toast('起飛需要至少 15% 能量');
+      return;
+    }
+
+    car.flight = 'HOVER';
+    car.vx = -Math.sin(car.yaw)*car.speed;
+    car.vz = -Math.cos(car.yaw)*car.speed;
+    car.speed = 0;
+    sound('up');
+  } else {
+    car.flight =
+      car.flight === 'LANDING' && energy >= 15
+        ? 'HOVER'
+        : 'LANDING';
+
+    sound(car.flight === 'HOVER' ? 'up' : 'down');
+  }
+}
+
+function axis(...codes) {
+  return codes.some(k=>keys.has(k)) ? 1 : 0;
+}
+
+function physics(dt) {
+  protection = Math.max(0,protection-dt);
+
+  const forward = clamp(
+    axis('KeyW','ArrowUp') -
+    axis('KeyS','ArrowDown') +
+    touch.y,
+    -1,1
+  );
+
+  const side = clamp(
+    axis('KeyD','ArrowRight') -
+    axis('KeyA','ArrowLeft') +
+    touch.x,
+    -1,1
+  );
+
+  let nx = car.x;
+  let nz = car.z;
+  let ny = car.y;
+  let na = car.yaw;
+
+  if (car.flight === 'GROUND') {
+    energy = clamp(energy+CFG.recharge*dt,0,100);
+
+    if (forward) {
+      car.speed += forward*CFG.acceleration*dt;
+    } else {
+      car.speed =
+        Math.sign(car.speed) *
+        Math.max(0,Math.abs(car.speed)-CFG.friction*dt);
+    }
+
+    car.speed = clamp(
+      car.speed,-CFG.reverseSpeed,CFG.maxSpeed
+    );
+
+    na -=
+      side *
+      CFG.steer *
+      clamp(car.speed/5,-1,1) *
+      dt;
+
+    nx -= Math.sin(na)*car.speed*dt;
+    nz -= Math.cos(na)*car.speed*dt;
+
+    car.vx = car.vz = car.vy = 0;
+  } else {
+    const consumed = Math.min(energy,CFG.drain*dt);
+    energy -= consumed;
+    usedEnergy += consumed;
+
+    if (energy <= 0 && car.flight !== 'LANDING') {
+      car.flight = 'LANDING';
+      toast('能量耗盡，正在自動降落');
+      sound('down');
+    }
+
+    let ax = side;
+    let az = forward;
+
+    const norm = Math.max(1,Math.hypot(ax,az));
+    ax /= norm;
+    az /= norm;
+
+    const tx = (
+      Math.cos(car.yaw)*ax -
+      Math.sin(car.yaw)*az
+    ) * CFG.hoverSpeed;
+
+    const tz = (
+      -Math.sin(car.yaw)*ax -
+      Math.cos(car.yaw)*az
+    ) * CFG.hoverSpeed;
+
+    car.vx = damp(car.vx,tx,CFG.hoverAccel,dt);
+    car.vz = damp(car.vz,tz,CFG.hoverAccel,dt);
+
+    nx += car.vx*dt;
+    nz += car.vz*dt;
+
+    const vertical =
+      axis('KeyR') -
+      axis('KeyF') +
+      touch.up -
+      touch.down;
+
+    let targetVy = car.flight === 'LANDING'
+      ? -1.2
+      : clamp(vertical,-1,1)*CFG.verticalSpeed;
+
+    if (
+      car.flight === 'HOVER' &&
+      car.y < 1 &&
+      vertical >= 0
+    ) {
+      targetVy = 1.2;
+    }
+
+    car.vy = damp(car.vy,targetVy,5,dt);
+    ny = clamp(car.y+car.vy*dt,0,CFG.maxHeight);
+
+    if (ny === CFG.maxHeight && car.vy > 0) {
+      car.vy = 0;
+    }
+  }
+
+  // 水平及轉向受阻時，回退至上一個合法姿態
+  if (!collides(nx,nz,car.y,na)) {
+    car.x = nx;
+    car.z = nz;
+    car.yaw = na;
+  } else {
+    car.speed = 0;
+    car.vx = car.vz = 0;
+    collision();
+  }
+
+  // 垂直碰撞保留高度，避免降落穿過車輛與路障
+  if (ny !== car.y) {
+    if (!collides(car.x,car.z,ny,car.yaw)) {
+      car.y = ny;
+    } else {
+      car.vy = 0;
+      collision();
+    }
+  }
+
+  if (
+    car.flight !== 'GROUND' &&
+    car.y <= .001 &&
+    car.vy <= 0
+  ) {
+    car.y = 0;
+    car.flight = 'GROUND';
+
+    car.speed =
+      car.vx*(-Math.sin(car.yaw)) +
+      car.vz*(-Math.cos(car.yaw));
+
+    car.vx = car.vz = car.vy = 0;
+    sound('down');
+  }
+
+  time = Math.max(0,time-dt);
+
+  const stopped =
+    Math.abs(car.speed) < .18 &&
+    Math.hypot(car.vx,car.vz) < .18;
+
+  const valid =
+    car.flight === 'GROUND' &&
+    car.y === 0 &&
+    stopped &&
+    withinTarget();
+
+  stable = valid ? stable+dt : 0;
+
+  if (time <= 0) {
+    finish(false);
+  } else if (stable >= CFG.parkTime) {
+    finish(true);
+  }
+}
+
+// 07 · 流程、計分與 UI
+function setState(next) {
+  state = next;
+  clearInput();
+
+  $('menu').classList.toggle('hidden',next !== 'MENU');
+  $('pausePanel').classList.toggle('hidden',next !== 'PAUSED');
+
+  $('result').classList.toggle(
+    'hidden',
+    next !== 'SUCCESS' && next !== 'FAILED'
+  );
+
+  for (const id of ['hud','targetHud']) {
+    $(id).classList.toggle('hidden',next === 'MENU');
+  }
+
+  $('pause').classList.toggle(
+    'hidden',
+    next !== 'PLAYING' && next !== 'PAUSED'
+  );
+
+  $('mobile').classList.toggle('hidden',next !== 'PLAYING');
+  $('pause').textContent =
+    next === 'PAUSED' ? '繼續 ▶' : '暫停 Ⅱ';
+
+  $('hint').style.opacity =
+    next === 'MENU' || next === 'PLAYING' ? '1' : '0';
+}
+
+function start() {
+  if (!ready) return;
+
+  unlock();
+  sound('click');
+  generate();
+
+  Object.assign(car,{
+    x:0,z:16,y:0,yaw:0,
+    speed:0,vx:0,vz:0,vy:0,
+    flight:'GROUND'
+  });
+
+  time = CFG.duration;
+  energy = 100;
+  usedEnergy = hits = protection = stable = shake = 0;
+  musicClock = 0;
+  toastTime = 0;
+
+  $('toast').style.opacity = 0;
+  $('result').classList.remove('success-glow');
+
+  setState('PLAYING');
+
+  toast(
+    `請停入 BAY ${String(target.id).padStart(2,'0')} 發光車格`
+  );
+}
+
+function finish(win) {
+  setState(win ? 'SUCCESS' : 'FAILED');
+  sound(win ? 'win' : 'fail');
+
+  $('resultEyebrow').textContent =
+    win ? 'MISSION COMPLETE' : 'MISSION ENDED';
+
+  $('resultTitle').textContent =
+    win ? '精準到位。' : '挑戰失敗';
+
+  $('stars').textContent = '';
+  $('score').textContent = '';
+
+  if (win) {
+    const timePoints = 60*time/CFG.duration;
+    const hitPoints = 25*Math.max(0,1-hits/5);
+    const energyPoints = 15*Math.max(0,1-usedEnergy/100);
+
+    const score = clamp(
+      Math.round(timePoints+hitPoints+energyPoints),0,100
+    );
+
+    const stars = score >= 80 ? 3 : score >= 55 ? 2 : 1;
+
+    saved.wins++;
+    saved.stars = Math.max(saved.stars,stars);
+    saved.best = Math.max(saved.best,score);
+
+    persist();
+    records();
+
+    $('stars').textContent =
+      '★'.repeat(stars)+'☆'.repeat(3-stars);
+
+    $('score').innerHTML =
+      `${score}<small> / 100</small>`;
+
+    $('resultDetails').textContent =
+      `剩餘 ${time.toFixed(1)} 秒 · 碰撞 ${hits} 次 · ` +
+      `累計耗能 ${usedEnergy.toFixed(0)}%\n` +
+      `時間 ${timePoints.toFixed(1)} / ` +
+      `碰撞 ${hitPoints.toFixed(1)} / ` +
+      `能效 ${energyPoints.toFixed(1)} 分。` +
+      `最佳 ${saved.best} 分。`;
+
+    $('result').classList.add('success-glow');
+  } else {
+    $('resultDetails').textContent =
+      `時間已用盡，尚未完成停車。碰撞 ${hits} 次。` +
+      `再試一次，善用俯視模式確認路線。`;
+  }
+}
+
+function pause() {
+  if (state === 'PLAYING') {
+    setState('PAUSED');
+  } else if (state === 'PAUSED') {
+    unlock();
+    setState('PLAYING');
+  }
+}
+
+function updateHUD() {
+  $('timer').innerHTML =
+    `${time.toFixed(1)} <span>SEC</span>`;
+
+  $('timer').style.color = time < 20 ? '#ff6471' : '#fff';
+
+  $('energy').textContent = `${Math.round(energy)}%`;
+  $('energyBar').style.width = `${energy}%`;
+
+  const speed = Math.max(
+    Math.abs(car.speed),
+    Math.hypot(car.vx,car.vz)
+  );
+
+  $('speed').textContent = `${(speed*3.6).toFixed(0)} km/h`;
+  $('height').textContent = `${car.y.toFixed(1)} m`;
+  $('hits').textContent = hits;
+
+  $('mode').textContent =
+    car.flight === 'GROUND'
+      ? '地面'
+      : car.flight === 'LANDING'
+        ? '降落中'
+        : '懸浮';
+
+  $('distance').textContent =
+    `${Math.hypot(car.x-target.x,car.z-target.z).toFixed(1)} m · TARGET`;
+
+  $('parkStatus').textContent =
+    stable > 0 ? '停穩確認中…' : '完全入格 · 落地 · 停穩';
+
+  $('lift').innerHTML =
+    car.flight === 'GROUND'
+      ? '起飛<br>Space'
+      : '降落<br>Space';
+}
+
+// 08 · 鍵盤、Pointer Events、失焦清理
+function clearInput() {
+  keys.clear();
+  touchPointers.up.clear();
+  touchPointers.down.clear();
+
+  touch.x = touch.y = touch.up = touch.down = 0;
+  stickPointer = null;
+  drag = null;
+
+  $('knob').style.transform = '';
+}
+
+$('start').onclick = start;
+$('retry').onclick = start;
+$('pause').onclick = pause;
+$('resume').onclick = pause;
+
+document.querySelectorAll('[data-menu]').forEach(b=>{
+  b.onclick = ()=>{
+    setState('MENU');
+    sound('click');
+  };
+});
+
+$('helpBtn').onclick = ()=>{
+  $('help').classList.remove('hidden');
+  sound('click');
+};
+
+$('closeHelp').onclick = ()=>{
+  $('help').classList.add('hidden');
+  sound('click');
+};
+
+const cameraNames = ['車尾跟隨','全場俯視','自由鏡頭'];
+
+function cycleCamera() {
+  cameraMode = (cameraMode+1)%3;
+  $('cameraName').textContent = cameraNames[cameraMode];
+  $('cam').textContent = `${cameraNames[cameraMode]} C`;
+
+  toast(
+    cameraNames[cameraMode] +
+    (cameraMode === 2 ? ' · 拖曳旋轉，滾輪縮放' : '')
+  );
+}
+
+$('cam').onclick = cycleCamera;
+
+window.addEventListener('keydown',e=>{
+  if (
+    ['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']
+      .includes(e.code)
+  ) {
+    e.preventDefault();
+  }
+
+  if (!e.repeat) {
+    if (e.code === 'Space') flightToggle();
+    if (e.code === 'KeyC') cycleCamera();
+
+    if (e.code === 'KeyP' || e.code === 'Escape') {
+      $('help').classList.add('hidden');
+      pause();
+    }
+  }
+
+  if (state === 'PLAYING') keys.add(e.code);
+});
+
+window.addEventListener('keyup',e=>keys.delete(e.code));
+
+let stickPointer = null;
+let drag = null;
+
+const stick = $('stick');
+
+stick.addEventListener('pointerdown',e=>{
+  if (stickPointer !== null) return;
+
+  stickPointer = e.pointerId;
+  stick.setPointerCapture(e.pointerId);
+  moveStick(e);
+  e.preventDefault();
+});
+
+function moveStick(e) {
+  if (e.pointerId !== stickPointer) return;
+
+  const r = stick.getBoundingClientRect();
+  const max = r.width*.33;
+  const dx = e.clientX-r.left-r.width/2;
+  const dy = e.clientY-r.top-r.height/2;
+
+  const scale = Math.min(
+    1,
+    max/Math.max(1,Math.hypot(dx,dy))
+  );
+
+  touch.x = dx*scale/max;
+  touch.y = -dy*scale/max;
+
+  $('knob').style.transform =
+    `translate(${dx*scale}px,${dy*scale}px)`;
+}
+
+stick.addEventListener('pointermove',moveStick);
+
+for (
+  const type of
+  ['pointerup','pointercancel','lostpointercapture']
+) {
+  stick.addEventListener(type,e=>{
+    if (e.pointerId === stickPointer) {
+      stickPointer = null;
+      touch.x = touch.y = 0;
+      $('knob').style.transform = '';
+    }
+  });
+}
+
+for (const [id,key] of [['up','up'],['down','down']]) {
+  const el = $(id);
+  const active = touchPointers[key];
+
+  el.addEventListener('pointerdown',e=>{
+    active.add(e.pointerId);
+    el.setPointerCapture(e.pointerId);
+    touch[key] = 1;
+    e.preventDefault();
+  });
+
+  for (
+    const type of
+    ['pointerup','pointercancel','lostpointercapture']
+  ) {
+    el.addEventListener(type,e=>{
+      active.delete(e.pointerId);
+      touch[key] = active.size ? 1 : 0;
+    });
+  }
+}
+
+$('lift').onclick = flightToggle;
+
+renderer.domElement.addEventListener('pointerdown',e=>{
+  if (cameraMode !== 2) return;
+
+  drag = {
+    id:e.pointerId,
+    x:e.clientX,
+    y:e.clientY
+  };
+
+  renderer.domElement.setPointerCapture(e.pointerId);
+});
+
+renderer.domElement.addEventListener('pointermove',e=>{
+  if (!drag || drag.id !== e.pointerId) return;
+
+  orbitYaw -= (e.clientX-drag.x)*.007;
+  orbitPitch = clamp(
+    orbitPitch+(e.clientY-drag.y)*.005,
+    .17,1.4
+  );
+
+  drag.x = e.clientX;
+  drag.y = e.clientY;
+});
+
+for (
+  const type of
+  ['pointerup','pointercancel','lostpointercapture']
+) {
+  renderer.domElement.addEventListener(type,()=>drag=null);
+}
+
+renderer.domElement.addEventListener('wheel',e=>{
+  if (cameraMode === 2) {
+    e.preventDefault();
+    orbitRadius = clamp(
+      orbitRadius+e.deltaY*.015,
+      7,32
+    );
+  }
+},{passive:false});
+
+function blur() {
+  clearInput();
+
+  if (state === 'PLAYING') setState('PAUSED');
+  if (audio) audio.suspend().catch(()=>{});
+}
+
+window.addEventListener('blur',blur);
+
+document.addEventListener('visibilitychange',()=>{
+  if (document.hidden) blur();
+});
+
+window.addEventListener('pointercancel',()=>clearInput());
+window.addEventListener('touchcancel',()=>clearInput());
+
+// 09 · 平滑攝影機、主迴圈與縮放
+function updateCamera(dt) {
+  look.set(car.x,car.y+.8,car.z);
+
+  if (state === 'MENU') {
+    desired.set(car.x+12,car.y+8,car.z+14);
+    look.set(car.x-3,car.y+.3,car.z-1);
+  } else if (cameraMode === 0) {
+    desired.set(
+      car.x+Math.sin(car.yaw)*10,
+      car.y+6.5,
+      car.z+Math.cos(car.yaw)*10
+    );
+  } else if (cameraMode === 1) {
+    const height = Math.max(
+      61,
+      35/(Math.tan(24*Math.PI/180)*camera.aspect)
+    );
+
+    desired.set(0,height,18);
+    look.set(0,0,0);
+  } else {
+    desired.set(
+      car.x+Math.sin(orbitYaw)*Math.cos(orbitPitch)*orbitRadius,
+      car.y+1+Math.sin(orbitPitch)*orbitRadius,
+      car.z+Math.cos(orbitYaw)*Math.cos(orbitPitch)*orbitRadius
+    );
+  }
+
+  camera.position.lerp(desired,1-Math.exp(-4*dt));
+  camera.position.y = Math.max(2,camera.position.y);
+  camLook.lerp(look,1-Math.exp(-6*dt));
+
+  if (shake > 0 && state === 'PLAYING') {
+    camera.position.x += (Math.random()-.5)*shake;
+    camera.position.y += (Math.random()-.5)*shake;
+    shake = Math.max(0,shake-dt);
+  }
+
+  camera.lookAt(camLook);
+}
+
+window.addEventListener('resize',()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+});
+
+renderer.domElement.addEventListener('webglcontextlost',e=>{
+  e.preventDefault();
+  blur();
+  toast('3D 顯示中斷，請重新整理頁面');
+});
+
+let last = performance.now();
+let elapsed = 0;
+
+function frame(now) {
+  requestAnimationFrame(frame);
+
+  const dt = Math.max(0,(now-last)/1000);
+  last = now;
+
+  if (state === 'PLAYING') {
+    let left = dt;
+
+    // 不丟棄經過時間，並將物理拆成最多 1/120 秒子步
+    while (left > 0 && state === 'PLAYING') {
+      const step = Math.min(left,1/120);
+      physics(step);
+      left -= step;
+    }
+
+    elapsed += dt;
+    musicClock += dt;
+
+    if (musicClock > 1.1) {
+      musicClock = 0;
+
+      tone(
+        [
+          130.81,164.81,196,164.81,
+          146.83,174.61,220,174.61
+        ][musicNote++%8],
+        1.6,'sine',.012
+      );
+    }
+  }
+
+  if (toastTime > 0) {
+    toastTime -= dt;
+    if (toastTime <= 0) $('toast').style.opacity = 0;
+  }
+
+  vehicle.position.set(car.x,car.y,car.z);
+  vehicle.rotation.y = car.yaw;
+
+  const showHover = car.flight !== 'GROUND';
+  vehicle.userData.under.material.opacity =
+    showHover ? .55 : 0;
+
+  for (const w of vehicle.userData.wheels) {
+    if (state === 'PLAYING') {
+      w.rotation.x += car.speed*dt/.36;
+    }
+  }
+
+  beacon.position.set(
+    0,
+    2.8+Math.sin(elapsed*2)*.2,
+    0
+  );
+
+  beacon.rotation.y = elapsed*.6;
+  pad.material.opacity = .09+Math.sin(elapsed*3)*.035;
+
+  updateCamera(dt);
+
+  if (state !== 'MENU') updateHUD();
+  renderer.render(scene,camera);
+}
+
+generate();
+ready = true;
+
+$('start').disabled = false;
+$('start').textContent = '開始挑戰 →';
+
+requestAnimationFrame(frame);
+</script>
+
+<script>
+window.addEventListener('error',function(){
+  const b = document.getElementById('start');
+
+  if (b && b.disabled) {
+    b.textContent = '3D 載入失敗，請重新整理';
+
+    const p = document.createElement('p');
+    p.className = 'fine';
+    p.textContent =
+      '請確認瀏覽器支援 WebGL 2，並允許存取 cdn.jsdelivr.net。';
+
+    document.getElementById('menu').appendChild(p);
+  }
+});
+</script>
+</body>
+</html>

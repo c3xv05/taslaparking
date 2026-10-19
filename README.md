@@ -1,4 +1,3 @@
-# taslaparking
 # Tesla Hover Parking Simulator — Neon Missions
 
 **未來懸浮停車模擬器：駕駛、起飛、穿越光環，最後精準停車。**
